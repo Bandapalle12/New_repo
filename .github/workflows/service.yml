@@ -42,7 +42,7 @@ jobs:
           aws ecs describe-clusters \
             --clusters "$CLUSTER" \
             --region "$AWS_REGION" \
-            --query 'clusters[0].[clusterName,status]'
+            --query 'clusters[0].[clusterName,status]' \
             --output table
 
            - name: Create service if missing
