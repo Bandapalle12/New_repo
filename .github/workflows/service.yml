@@ -33,20 +33,12 @@ jobs:
         run: |
           echo "Caller identity:"
           aws sts get-caller-identity
-          
+
           echo "Check task definition exists:"
           aws ecs describe-task-definition \
             --task-definition my-nginx-task \
             --region "$AWS_REGION" || (echo "Task definition missing!" && exit 1)
 
-          echo "Cluster status:"
-          cat << 'EOF' > check_cluster.sh
-aws ecs describe-clusters \
-  --clusters "$CLUSTER" \
-  --region "$AWS_REGION" \
-  --query "clusters[0].[clusterName,status]" \
-  --output table
-EOF
           bash check_cluster.sh
 
       - name: Create service if missing
