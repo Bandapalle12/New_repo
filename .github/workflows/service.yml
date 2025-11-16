@@ -32,6 +32,10 @@ jobs:
       - name: Create service if missing
         run: |
           set -e
+          echo "Cluster = '$CLUSTER'"
+          echo "Service = '$SERVICE'"
+          echo "AWS Region = '$AWS_REGION'"
+
           echo "Checking if service exists..."
           SVC_ARN=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" --region "$AWS_REGION" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "NONE")
           if [ "$SVC_ARN" = "NONE" ] || [ "$SVC_ARN" = "None" ]; then
@@ -50,4 +54,5 @@ jobs:
             echo "Current service summary:"
             aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" --region "$AWS_REGION" --output table
           fi
+
 
