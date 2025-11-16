@@ -28,23 +28,24 @@ jobs:
           echo "CLUSTER=$CLUSTER"
           echo "SERVICE=$SERVICE"
 
-      - name: Show caller identity & check prereqs
+ - name: Show caller identity & check prereqs
         run: |
           echo "Caller identity:"
           aws sts get-caller-identity
-          
           echo "Check task definition exists:"
           aws ecs describe-task-definition \
             --task-definition my-nginx-task \
             --region "$AWS_REGION" || (echo "Task definition missing!" && exit 1)
 
           echo "Cluster status:"
-          aws ecs describe-clusters \
-            --clusters "$CLUSTER" \
-            --region "$AWS_REGION" \
-            --query 'clusters[0].[clusterName,status]' \
-            --output table
-
+          cat << 'EOF' > check_cluster.sh
+aws ecs describe-clusters \
+  --clusters "$CLUSTER" \
+  --region "$AWS_REGION" \
+  --query "clusters[0].[clusterName,status]" \
+  --output table
+EOF
+|
            - name: Create service if missing
              run: |
           set -e|
