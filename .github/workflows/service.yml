@@ -42,22 +42,30 @@ jobs:
           aws ecs describe-clusters \
             --clusters "$CLUSTER" \
             --region "$AWS_REGION" \
-            --query 'clusters[0].[clusterName,status]' \
+            --query 'clusters[0].[clusterName,status]'
             --output table
 
-      - name: Create service if missing
-        run: |
-          set -e
+           - name: Create service if missing
+             run: |
+          set -e|
           echo "Checking if ECS service exists..."
 
+          # Try to get service status safely
           SERVICE_STATUS=$(aws ecs describe-services \
             --cluster "$CLUSTER" \
             --services "$SERVICE" \
             --region "$AWS_REGION" \
-            --query 'services[0].status' \
-            --output text 2>/dev/null || echo "NONE")
+            --query "services[0].status" \
+            --output text 2>/dev/null || true)
 
-          if [ "$SERVICE_STATUS" = "MISSING" ] || [ "$SERVICE_STATUS" = "None" ] || [ "$SERVICE_STATUS" = "NONE" ]; then
+          echo "Raw SERVICE_STATUS = '$SERVICE_STATUS'"
+
+          if [ "$SERVICE_STATUS" = "MISSING" ] || \
+             [ "$SERVICE_STATUS" = "None" ] || \
+             [ "$SERVICE_STATUS" = "NONE" ] || \
+             [ "$SERVICE_STATUS" = "" ] || \
+             [ "$SERVICE_STATUS" = "[]" ]; then
+
             echo "Service does NOT exist. Creating $SERVICE..."
 
             aws ecs create-service \
@@ -71,4 +79,12 @@ jobs:
 
             echo "Service created successfully."
 
-          el
+          else
+            echo "Service already exists with status: $SERVICE_STATUS"
+            aws ecs describe-services \
+              --cluster "$CLUSTER" \
+              --services "$SERVICE" \
+              --region "$AWS_REGION" \
+              --output table
+          fi
+
