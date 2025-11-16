@@ -6,6 +6,7 @@ on:
 jobs:
   create-service:
     runs-on: ubuntu-latest
+
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       CLUSTER: ${{ secrets.ECS_CLUSTER }}
@@ -28,10 +29,11 @@ jobs:
           echo "CLUSTER=$CLUSTER"
           echo "SERVICE=$SERVICE"
 
- - name: Show caller identity & check prereqs
+      - name: Show caller identity & check prereqs
         run: |
           echo "Caller identity:"
           aws sts get-caller-identity
+          
           echo "Check task definition exists:"
           aws ecs describe-task-definition \
             --task-definition my-nginx-task \
@@ -45,13 +47,13 @@ aws ecs describe-clusters \
   --query "clusters[0].[clusterName,status]" \
   --output table
 EOF
-|
-           - name: Create service if missing
-             run: |
-          set -e|
+          bash check_cluster.sh
+
+      - name: Create service if missing
+        run: |
+          set -e
           echo "Checking if ECS service exists..."
 
-          # Try to get service status safely
           SERVICE_STATUS=$(aws ecs describe-services \
             --cluster "$CLUSTER" \
             --services "$SERVICE" \
@@ -88,4 +90,3 @@ EOF
               --region "$AWS_REGION" \
               --output table
           fi
-
