@@ -1,0 +1,80 @@
+name: Advanced CI Workflow
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  APP_ENV: "production"
+
+jobs:
+
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16, 18, 20]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix['node-version'] }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix['node-version'] }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: |
+          echo "Running tests on Node.js ${{ matrix['node-version'] }}"
+          echo "Test results for Node.js ${{ matrix['node-version'] }}" > results-${{ matrix['node-version'] }}.txt
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix['node-version'] }}
+          path: results-${{ matrix['node-version'] }}.txt
+
+  security-check:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run security scan (dummy)
+        run: |
+          echo "Security scanning..."
+          echo "Scan complete: no issues found." > security-report.txt
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.txt
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-check]
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Print artifact contents
+        run: ls -R artifacts
+
+      - name: Use secret value
+        run: echo "Deploying with API key: ${{ secrets.DEPLOY_API_KEY }}"
+
+      - name: Conditional deploy
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: echo "Deployment completed on main branch!"
