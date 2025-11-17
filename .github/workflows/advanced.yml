@@ -73,7 +73,7 @@ jobs:
         run: ls -R artifacts
 
       - name: Use secret value
-        run: echo "Deploying with API key: ${{ secrets.DEPLOY_API_KEY }}"
+        run: echo "Using API key for deployment"
 
       - name: Conditional deploy
         if: ${{ github.ref == 'refs/heads/main' }}
