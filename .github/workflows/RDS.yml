@@ -1,0 +1,47 @@
+name: Simple RDS Create Lab
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-rds:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      DB_IDENTIFIER: dev-mysql-simple      
+      DB_NAME: myappdb
+      DB_INSTANCE_CLASS: db.t3.micro      
+      ALLOCATED_STORAGE: 20               
+      ENGINE: mysql
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create RDS MySQL instance
+        run: |
+          echo "Creating RDS instance: $DB_IDENTIFIER in region $AWS_REGION"
+
+          aws rds create-db-instance \
+            --db-instance-identifier "$DB_IDENTIFIER" \
+            --db-instance-class "$DB_INSTANCE_CLASS" \
+            --engine "$ENGINE" \
+            --allocated-storage "$ALLOCATED_STORAGE" \
+            --master-username "${{ secrets.RDS_MASTER_USERNAME }}" \
+            --master-user-password "${{ secrets.RDS_MASTER_PASSWORD }}" \
+            --db-name "$DB_NAME" \
+            --publicly-accessible \
+            --backup-retention-period 0 \
+            --no-multi-az \
+            --storage-type gp2
+
+          echo "Create request sent. It will take a few minutes to become available."
+
+      - name: Describe RDS instance 
+        run: |
+          aws rds describe-db-instances --db-instance-identifier "$DB_IDENTIFIER"
