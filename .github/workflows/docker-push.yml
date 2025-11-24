@@ -28,4 +28,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/New_repo:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/new_repo:latest
